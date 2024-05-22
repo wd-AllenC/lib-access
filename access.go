@@ -109,17 +109,6 @@ type LegacyErrorResponse struct {
 	Message string        `json:"message"`
 }
 
-// TokenError is used to return error with error occurred JWT token when processing JWT token
-type TokenError struct {
-	Token *jwt.Token
-	Err   error
-}
-
-// Error implements error.
-func (*TokenError) Error() string {
-	panic("unimplemented error")
-}
-
 type VerifyApiKeyResponse struct {
 	Email    string   `json:"email"`
 	Status   string   `json:"status"`
@@ -219,10 +208,10 @@ func AccessMiddleware(rdb *redis.Client, authHost string, key string) echo.Middl
 
 				newToken, err := jwt.ParseWithClaims(accessToken, &DippClaims{}, keyFunc)
 				if err != nil {
-					return nil, &TokenError{Token: newToken, Err: err}
+					return nil, err
 				}
 				if !newToken.Valid {
-					return nil, &TokenError{Token: newToken, Err: errors.New("invalid token")}
+					return nil, errors.New("invalid token")
 				}
 
 				return newToken, nil
@@ -237,10 +226,10 @@ func AccessMiddleware(rdb *redis.Client, authHost string, key string) echo.Middl
 
 				token, err := jwt.ParseWithClaims(auth, &DippClaims{}, keyFunc)
 				if err != nil {
-					return nil, &TokenError{Token: token, Err: err}
+					return nil, err
 				}
 				if !token.Valid {
-					return nil, &TokenError{Token: token, Err: errors.New("invalid token")}
+					return nil, errors.New("invalid token")
 				}
 
 				if rdb != nil {
